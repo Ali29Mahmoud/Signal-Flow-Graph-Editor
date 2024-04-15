@@ -13,9 +13,11 @@ class GraphTraversal:
         self._loops_without_duplicates = []
         self._double_non_touching_loops = []
         self._loops_not_touching_forward_paths = []
+        self._non_touching_loops = []
 
         self._adj_list = self._create_adj_list_representation()
-        self._generate_forward_paths_and_loops()
+        if not self._is_valid_graph(self._generate_forward_paths_and_loops()):
+            return
         self._loops_without_duplicates = self._remove_duplicates(self._loops)
         self._graph_of_non_touching_loops = self._get_graph_of_non_touching_loops()
         self._non_touching_loops = self._get_all_non_touching_loops()
@@ -33,6 +35,19 @@ class GraphTraversal:
     def get_loops_not_touching_forward_paths(self):
         return self._loops_not_touching_forward_paths
 
+    def _is_valid_graph(self, flag):
+        if not flag:
+            print("Invalid graph")
+            return False
+        for i in range(len(self._out_degree)):
+            if self._out_degree[i] == 0:
+                if self._in_degree[i] == 0:
+                    print("Invalid graph")
+                    return False
+                return True
+        print("Invalid graph")
+        return False
+
     def _create_adj_list_representation(self):
         adj_list = []
         for _ in self._graph_nodes:
@@ -45,7 +60,7 @@ class GraphTraversal:
             self._out_degree[edge[0]] += 1
         return adj_list
 
-    def get_forward_paths_and_loops(self, path, node):
+    def _get_forward_paths_and_loops(self, path, node):
         path[0].append(node[0])  # Append node name
         path[1].append(node[1])  # Append node gain
         if self._out_degree[node[0]] == 0:
@@ -62,7 +77,7 @@ class GraphTraversal:
         else:
             self._visited[node[0]] = True
             for child in self._adj_list[node[0]]:
-                self.get_forward_paths_and_loops(path, child)
+                self._get_forward_paths_and_loops(path, child)
             path[0].pop()
             path[1].pop()
             self._visited[node[0]] = False
@@ -150,8 +165,12 @@ class GraphTraversal:
 
     def _generate_forward_paths_and_loops(self):
         start_node = self._get_start_node()
+        if start_node == -1:
+            print("Couldn't find start node'")
+            return False  # Error
         for child in self._adj_list[start_node]:
-            self.get_forward_paths_and_loops([[start_node], []], child)
+            self._get_forward_paths_and_loops([[start_node], []], child)
+        return True
 
     def _remove_duplicates(self, loops):
         seen = set()
