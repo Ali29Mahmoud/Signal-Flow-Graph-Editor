@@ -1,8 +1,8 @@
-import pygame, sys
 from RouthCriterionScreen import *
-from GUI_modules.button import Button
 from GUI_modules.node import Node
 from Logic.CalculateTransferFunction import *
+from RouthCriterionScreen import *
+
 
 def get_font(size):
     return pygame.font.Font("assets/font.ttf", size)

@@ -1,8 +1,6 @@
 import copy
 import itertools
 
-import networkx as nx
-
 
 class GraphTraversal:
     def __init__(self, graph: list[list[int] | list[list[int | str]]]):
@@ -142,26 +140,6 @@ class GraphTraversal:
                     all_combinations.append(combination_list)
         unique_combinations = set(tuple(sorted(cycle)) for cycle in all_combinations)
         return [list(combination) for combination in unique_combinations]
-
-    def _dfs_graph(self, node, parent, visited, non_touching_loops, path, passed_by):
-        path.append(node)
-        visited[node] = 1
-        passed_by.add(node)
-        for child in self._graph_of_non_touching_loops[node]:
-            if child != parent:
-                if visited[child] == 0:
-                    self._dfs_graph(child, node, visited, non_touching_loops, path, passed_by)
-                elif visited[child] == 1:
-                    path_copy = copy.deepcopy(path)
-                    path_copy = self._handle_loops_for_non_touching_loops(path_copy, child)
-                    non_touching_loops.append(path_copy)
-        path.pop()
-        visited[node] = 0
-
-    def _handle_loops_for_non_touching_loops(self, path, node):
-        for i in range(len(path)):
-            if path[i] == node:
-                return path[i:]
 
     def _get_loops_after_removing_forward_paths(self):
         for path in self._forward_paths:
