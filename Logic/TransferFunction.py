@@ -19,6 +19,16 @@ class TransferFunction:
     def get_transfer_function(self):
         return self._transfer_function
 
+    def get_delta(self):
+        simplified = sp.sympify(self._non_touching_loops_gains)
+        return sp.simplify(simplified)
+
+    def get_forward_paths_delta(self):
+        container = []
+        for delta in self._delta_of_forward_paths:
+            container.append(sp.simplify(sp.sympify(delta)))
+        return container
+
     def _assign_data(self):
         self._non_touching_loops = self._group_lists_by_length(self._non_touching_loops)
 
@@ -54,12 +64,12 @@ class TransferFunction:
         delta = '1'
         if len(forward_path_loops) == 0:
             return delta
-        flag_summation = False
-        flag_product = False
         for lists_of_same_size in forward_path_loops:
             summation = '( '
+            flag_summation = False
             for list_of_non_touching_loops in lists_of_same_size:
                 product = ''
+                flag_product = False
                 for loop_index in list_of_non_touching_loops:
                     if not flag_product:
                         product += f"( {self._loops_gains[loop_index]} )"
@@ -91,17 +101,11 @@ class TransferFunction:
         self._transfer_function = sp.simplify(expression_string)
 
     def _group_lists_by_length(self, input_lists: list[list]):
-        # Step 1: Create a dictionary to group lists by length
         length_groups = {}
-
-        # Step 2: Iterate over the input lists and group them by length
         for lst in input_lists:
             length = len(lst)
             if length not in length_groups:
                 length_groups[length] = []
             length_groups[length].append(lst)
-
-        # Step 3: Create the desired output structure
         output = [group for group in length_groups.values()]
-
         return output

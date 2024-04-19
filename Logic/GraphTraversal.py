@@ -1,8 +1,11 @@
 import copy
+import itertools
+
+import networkx as nx
 
 
 class GraphTraversal:
-    def __init__(self, graph):
+    def __init__(self, graph: list[list[int] | list[list[int | str]]]):
         self._graph_nodes = graph[0]
         self._graph_edges = graph[1]
         self._in_degree = [0 for _ in range(len(self._graph_nodes))]
@@ -114,18 +117,31 @@ class GraphTraversal:
         return False
 
     def _get_all_non_touching_loops(self):
-        visited = [0 for _ in range(len(self._graph_of_non_touching_loops))]
-        passed_by = set()
-        non_touching_loops = []
-        for x in self._double_non_touching_loops:
-            non_touching_loops.append(x)
-        for i in range(len(self._loops_without_duplicates)):
-            non_touching_loops.append([i])
-        for i in range(len(self._graph_of_non_touching_loops)):
-            if i not in passed_by:
-                self._dfs_graph(i, None, visited, non_touching_loops, [], passed_by)
-        unique_cycles = set(tuple(sorted(cycle)) for cycle in non_touching_loops)
-        return [list(cycle) for cycle in unique_cycles]
+        cliques = []
+        vertices = set(range(len(self._graph_of_non_touching_loops)))
+        self._bron_kerbosch([], vertices, set(), self._graph_of_non_touching_loops, cliques)
+        return self._get_all_combinations(cliques)
+
+    def _bron_kerbosch(self, r, p, x, graph, cliques):
+        if not p and not x:
+            cliques.append(r)
+            return
+        pivot = max(p.union(x), key=lambda y: len(set(graph[y]) & p))
+        for v in list(p - set(graph[pivot])):
+            self._bron_kerbosch(r + [v], p.intersection(graph[v]), x.intersection(graph[v]), graph, cliques)
+            p.remove(v)
+            x.add(v)
+
+    def _get_all_combinations(self, cliques):
+        all_combinations = []
+        for sublist in cliques:
+            for r in range(1, len(sublist) + 1):
+                combinations = itertools.combinations(sublist, r)
+                for combination_tuple in combinations:
+                    combination_list = list(combination_tuple)
+                    all_combinations.append(combination_list)
+        unique_combinations = set(tuple(sorted(cycle)) for cycle in all_combinations)
+        return [list(combination) for combination in unique_combinations]
 
     def _dfs_graph(self, node, parent, visited, non_touching_loops, path, passed_by):
         path.append(node)

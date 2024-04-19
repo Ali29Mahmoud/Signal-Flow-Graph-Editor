@@ -16,6 +16,7 @@ class Node:
 
         pygame.font.init()
         self.myfont = pygame.font.SysFont('Arial', 20)
+        self.textFont = pygame.font.SysFont('Arial', 30)
         self.rect = pygame.Rect(pos_x - self.radius, pos_y - self.radius, self.radius * 2, self.radius * 2)
         
     def render(self, screen):
@@ -96,10 +97,11 @@ class Node:
                     self.hl_arcs.append(a)
 
     def render_edge(self, screen, mouse_pos):
+        cx = 0
+        cy = 0
         for a in self.edges:
-            if a[2]:
-                if self.id == a[0].id:
-                    # Circular edge
+            if a[2]:  # Checking if the edge should be rendered
+                if self.id == a[0].id:  # Circular edge
                     x1, y1 = self.get_position()
                     loopRadius = 40
                     y1 -= loopRadius
@@ -108,26 +110,27 @@ class Node:
                     # Render the weight text for circular edge
                     cx = int(x1)
                     cy = int(y1 - loopRadius - 10)
-                    text_surface = self.myfont.render(str(a[1]), False, (255, 255, 255))
+                    text_surface = self.textFont.render(str(a[1]), False, (255, 255, 40))
                     text_rect = text_surface.get_rect(center=(cx, cy))
                     screen.blit(text_surface, text_rect)
                 else:
-                    # Normal edge
                     x1, y1 = self.get_position()
                     x2, y2 = a[0].get_position()
+                    c1, c2 = ((x1+x2)/2, (y1+y2)/2 - 50 * (x2-x1)/200)
 
-                    # Calculate angle of the edge
-                    angle = math.atan2(y2 - y1, x2 - x1)
+                    # Draw the curve
+                    self.draw_curve(screen, (x1, y1), (x2, y2), (c1, c2), WHITE)
 
-                    # Calculate the endpoint of the arrowhead at the border of the destination node
+                    # Draw the arrowhead at the end of the curve
                     arrow_length = 10
-                    end_x = x2 - (a[0].radius + arrow_length) * math.cos(angle)
-                    end_y = y2 - (a[0].radius + arrow_length) * math.sin(angle)
 
-                    # Draw the edge line
-                    pygame.draw.line(screen, (255, 255, 255), (x1, y1), (end_x, end_y), 2)
+                    temp_x1, temp_y1 = self.get_edge_points(x1,x2,y1,y2,0.94)
+                    temp_x2, temp_y2 = self.get_edge_points(x1,x2,y1,y2,0.96)
+                    angle = math.atan2(temp_y2 - temp_y1, temp_x2 - temp_x1)
 
-                    # Draw the arrowhead
+                    t = 0.95  # Adjust this value to change the position of the weight along the curve
+                    end_x = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * c1 + t ** 2 * x2
+                    end_y = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * c2 + t ** 2 * y2
                     arrow_angle = math.pi / 6  # Angle of the arrowhead
                     arrowhead_points = [
                         (end_x - arrow_length * math.cos(angle - arrow_angle), end_y - arrow_length * math.sin(angle - arrow_angle)),
@@ -136,12 +139,19 @@ class Node:
                     ]
                     pygame.draw.polygon(screen, (255, 255, 255), arrowhead_points)
 
-                    # Draw the weight text
-                    cx = int((x1 + end_x) / 2)
-                    cy = int((y1 + end_y) / 2)
-                    text_surface = self.myfont.render(str(a[1]), False, (255, 255, 255))
-                    text_rect = text_surface.get_rect(center=(cx, cy))
+                    cx, cy = mid_x, mid_y = self.get_edge_points(x1,x2,y1,y2,0.5)
+
+
+                    # Draw the weight text along the curve
+                    text_surface = self.textFont.render(str(a[1]), False, (255, 255, 40))
+                    text_rect = text_surface.get_rect(center=(int(mid_x), int(mid_y)))
                     screen.blit(text_surface, text_rect)
+
+        d = math.sqrt((cx - mouse_pos[0])**2 + (cy - mouse_pos[1])**2)
+        if d < self.arc_radius:
+                    pygame.draw.circle(screen, (255,255,255), (cx, cy),self.arc_radius, 0)
+
+
 
 
 
@@ -152,9 +162,9 @@ class Node:
                 if self.id == a[0].id:
                     # Calculate the center and radius of the circular arc
                     arc_center_x, arc_center_y = self.get_position()
-                    arc_radius = 40  # Adjust as needed
+                    arc_radius = 10  # Adjust as needed
                     # Calculate the distance between the click and the center of the arc
-                    d = math.sqrt((arc_center_x - pos_x)**2 + (arc_center_y - pos_y)**2)
+                    d = math.sqrt((arc_center_x - pos_x)**2 + ((arc_center_y - 90) - pos_y)**2)
                     # If the distance is within the radius of the circular arc, return the current node
                     if d < arc_radius:
                         return self
@@ -162,12 +172,32 @@ class Node:
                     # For normal edges, calculate if the click falls within the bounding box of the edge
                     x1, y1 = self.get_position()
                     x2, y2 = a[0].get_position()
-                    cx = int((x1 + x2)/2)
-                    cy = int((y1 + y2)/2)
-                    d = math.sqrt((cx - pos_x)**2 + (cy - pos_y)**2)
+                    c1, c2 = ((x1+x2)/2, (y1+y2)/2 - 50 * (x2-x1)/200)
+                    t = 0.5  # Adjust this value to change the position of the weight along the curve
+                    mid_x = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * c1 + t ** 2 * x2
+                    mid_y = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * c2 + t ** 2 * y2
+
+                    d = math.sqrt((mid_x - pos_x)**2 + (mid_y - pos_y)**2)
                     if d < self.arc_radius:
                         return a[0]
 
         return None
+    
+    def draw_curve(self, screen, start, end, control, color):
+    # Draw curve using quadratic Bezier curve
+        for t in range(0, 501, 1):
+            t /= 500.0
+            x = (1 - t) ** 2 * start[0] + 2 * (1 - t) * t * control[0] + t ** 2 * end[0] 
+            y = (1 - t) ** 2 * start[1] + 2 * (1 - t) * t * control[1] + t ** 2 * end[1] 
+            pygame.draw.circle(screen, color, (int(x), int(y)), 1)
+
+    def get_edge_points(self,x1,x2,y1,y2,t):
+        c1, c2 = ((x1+x2)/2, (y1+y2)/2 - 50 * (x2-x1)/200)
+        point_x = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * c1 + t ** 2 * x2
+        point_y = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * c2 + t ** 2 * y2
+
+        return point_x, point_y
+
+
 
         

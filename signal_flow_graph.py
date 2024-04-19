@@ -1,8 +1,9 @@
 import pygame
 import sys
-from node import Node
-from button import Button
-from CalculateTransferFunction import *
+from GUI_modules.node import Node
+from GUI_modules.button import Button
+from Logic.CalculateTransferFunction import *
+
 
 def get_font(size):
     return pygame.font.Font("assets/font.ttf", size)
@@ -32,6 +33,10 @@ def SigFlowGraph():
 
     getTransferFunction = Button(image=pygame.image.load("assets/GTF Rect.png"), pos=(650, 650), 
                             text_input="GET TRANSFER FUNCTION", font=get_font(20), base_color="#d7fcd4", hovering_color="White")
+    
+    SFG_BACK = Button(image = None, pos=(80, 50), 
+                            text_input="BACK", font=get_font(20), base_color="White", hovering_color="Green")
+
 
     pygame.font.init()
     myfont = pygame.font.SysFont('Arial', 20)
@@ -43,10 +48,13 @@ def SigFlowGraph():
 
     while True:
         screen.fill(black)
-        
+
         if not editing:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = event.pos
+                    if SFG_BACK.checkForInput((mouse_x, mouse_y)):
+                        print("eshta")
                     if getTransferFunction.checkForInput(MENU_MOUSE_POS):
                         calculateTransferFunction(Vertices)
                         pass
@@ -103,9 +111,6 @@ def SigFlowGraph():
                         vertexCount += 1
                         Vertices.append(Node(vertexCount, mouse_x, mouse_y))
 
-                    elif event.button == 2:
-                        pass
-
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if event.button == 1:
                         if dragging and not moved:
@@ -151,7 +156,7 @@ def SigFlowGraph():
                     elif event.key == pygame.K_BACKSPACE:
                         current_value = current_value[:-1]
                     else:
-                        if(event.unicode in ['1','2','3','4','5','6','7','8','9','+','-','*','/','(',')','^', 's']):
+                        if(event.unicode in ['0','1','2','3','4','5','6','7','8','9','+','-','*','/','(',')','^', 's']):
                             current_value += event.unicode
 
             editing_information[0].edit_edge(editing_information[1], current_value, True)
@@ -190,9 +195,7 @@ def SigFlowGraph():
         MENU_MOUSE_POS = pygame.mouse.get_pos()
         getTransferFunction.changeColor(MENU_MOUSE_POS)
         getTransferFunction.update(screen)
+        SFG_BACK.changeColor(MENU_MOUSE_POS)
+        SFG_BACK.update(screen)
         pygame.display.update()
         clock.tick(60)
-
-
-
-
