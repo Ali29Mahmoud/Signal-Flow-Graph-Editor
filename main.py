@@ -1,8 +1,8 @@
+import pygame, sys
 from RouthCriterionScreen import *
+from GUI_modules.button import Button
 from GUI_modules.node import Node
 from Logic.CalculateTransferFunction import *
-from RouthCriterionScreen import *
-
 
 def get_font(size):
     return pygame.font.Font("assets/font.ttf", size)
@@ -157,17 +157,37 @@ def SigFlowGraph():
 
                         for paths in paths_loops[0]:
                             count = 0
+                            charactersCount = 0
                             for node in paths[0]:
                                 count += 1
                                 result_string += str(node)
+                                charactersCount += 1
+                                lineEndTolerance = 45
+                                
+
+                                if(charactersCount > lineEndTolerance):
+                                  
+                                    charactersCount = 0
+                                    result_string += "\n\n"
 
                                 if count < len(paths[0]):
                                     result_string += " -> "
+                                    charactersCount += 4
+                                    if(charactersCount > lineEndTolerance):
+                                       
+                                        charactersCount = 0
+                                        result_string += "\n\n"
                             
                             pathsCount += 1
 
                             if(pathsCount < len(paths_loops[0])):   
                                 result_string += " || "
+                                charactersCount += 4
+                                if(charactersCount > lineEndTolerance):
+                                    
+                                    charactersCount = 0
+                                    result_string += "\n\n"
+                                
                             
                             if(pathsCount % 2 == 0):
                                 result_string += "\n\n"
